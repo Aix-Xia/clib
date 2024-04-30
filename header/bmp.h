@@ -11,7 +11,6 @@
 
 #define INFOSIZE		40
 #define PLANEVALUE		1
-//#define PELSPERMETER	0x0ec4
 
 
 #define bitCount1		((uint16_t)1)
