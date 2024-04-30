@@ -1,4 +1,4 @@
-#include "../hlib.h"
+#include "../header/common.h"
 
 
 bool s_flag_debug_print = true;
