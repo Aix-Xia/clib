@@ -163,8 +163,6 @@ BMP::BMP(int32_t width, int32_t height, uint16_t bitCount) {
 	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
 	uint32_t fOffBits = 4 * colorCount + 14 + 40;
 	uint32_t fSize = fOffBits + ((width > 0 ? width : -width) * bitCount + 31) / 32 * 4 * (height > 0 ? height : -height);
-	//BMPFileHeader fh(fSize, fOffBits);
-	//BMPInfoHeader ih(width, height, bitCount);
 	fileHeader.SetFileHeader(fSize, fOffBits);
 	infoHeader.SetInfoHeader(width, height, bitCount);
 
@@ -172,15 +170,17 @@ BMP::BMP(int32_t width, int32_t height, uint16_t bitCount) {
 	data = (int*)calloc((width > 0 ? width : -width) * (height > 0 ? height : -height), sizeof(int));
 
 	if (rgb == NULL || data == NULL) {
-		perror("Error:");
+		perror("Error: calloc");
 	}
 
-	for (int i = 0; i < colorCount; i++) {
-		(rgb + i)->SetColor(0, 0, 0);
-	}
-	for (int i = 0; i < (width > 0 ? width : -width) * (height > 0 ? height : -height); i++) {
-		*(data + i) = 0;
-	}
+	ResetColor();
+	//for (int i = 0; i < colorCount; i++) {
+	//	(rgb + i)->SetColor(255, 255, 255);
+	//}
+	ResetData();
+	//for (int i = 0; i < (width > 0 ? width : -width) * (height > 0 ? height : -height); i++) {
+	//	*(data + i) = 0;
+	//}
 }
 BMP::~BMP() {
 	free(rgb);
@@ -196,23 +196,45 @@ int BMP::SetColor(uint8_t index, uint8_t red, uint8_t green, uint8_t blue) {
 	(rgb + index)->SetColor(red, green, blue);
 	return 0;
 }
-int BMP::SetData(uint32_t width, uint32_t height, uint32_t value) {
+int BMP::ResetColor() {
+	int bitCount = infoHeader.GetBitCount();
+	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
+	for (int i = 0; i < colorCount; i++) {
+		(rgb + i)->SetColor(255, 255, 255);
+	}
+	return 0;
+}
+uint32_t BMP::GetDataIndex(uint32_t row, uint32_t col) {
 	uint32_t ttWidth = infoHeader.GetWidth();
 	uint32_t ttHeight = infoHeader.GetHeight();
-	uint16_t bitCount = infoHeader.GetBitCount();
-	if ((width >= ttWidth) || (height >= ttHeight)) {
+	if ((col >= ttWidth) || (row >= ttHeight)) {
 		perror("index is out of range!\n");
 		return -1;
 	}
+	uint32_t index = row * ttWidth + col;
+	return index;
+}
+int BMP::SetData(uint32_t row, uint32_t col, uint32_t value) {
+	uint16_t bitCount = infoHeader.GetBitCount();
 	if ((bitCount != 32) && (value > (uint32_t)(pow(2, bitCount) - 1))) {
 		perror("value is out of range!\n");
 		return -1;
 	}
-	*(data + height * ttWidth + width) = value;
+	uint32_t index = GetDataIndex(row, col);
+	*(data + index) = value;
 
 	return 0;
 }
-int BMP::WriteBMP(const char* fileName) {
+int BMP::ResetData() {
+	uint32_t ttWidth = infoHeader.GetWidth();
+	uint32_t ttHeight = infoHeader.GetHeight();
+	uint32_t ttDataCount = ttWidth * ttHeight;
+	for (uint32_t i = 0; i < ttDataCount; i++) {
+		*(data + i) = 0;
+	}
+	return 0;
+}
+int BMP::Save(const char* fileName) {
 	uint32_t ttHeight = infoHeader.GetHeight();
 	uint32_t ttWidth = infoHeader.GetWidth();
 	uint16_t bitCount = infoHeader.GetBitCount();
@@ -226,6 +248,7 @@ int BMP::WriteBMP(const char* fileName) {
 
 	// write fileHeader to fw
 	fileHeader.WriteFileHeader(fw);
+
 	// write infoHeader to fw
 	infoHeader.WriteInfoHeader(fw);
 

@@ -91,8 +91,11 @@ public:
 	BMP(int32_t width, int32_t height, uint16_t bitCount);
 	~BMP();
 	int SetColor(uint8_t index, uint8_t red, uint8_t green, uint8_t blue);
-	int SetData(uint32_t width, uint32_t height, uint32_t value);
-	int WriteBMP(const char* fileName);
+	int ResetColor();
+	uint32_t GetDataIndex(uint32_t row, uint32_t col);
+	int SetData(uint32_t row, uint32_t col, uint32_t value);
+	int ResetData();
+	int Save(const char* fileName);
 private:
 	BMPFileHeader fileHeader;
 	BMPInfoHeader infoHeader;
