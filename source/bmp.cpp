@@ -4,6 +4,8 @@
 uint32_t s_xpelspermeter = 0x0ec4;
 uint32_t s_ypelspermeter = 0x0ec4;
 
+RGB s_defaultColor(255, 255, 255);
+
 
 int BitCountCorrect(uint16_t* bitCount) {
 	if ((*bitCount != bitCount1) && (*bitCount != bitCount4) && (*bitCount != bitCount8) && (*bitCount != bitCount24) && (*bitCount != bitCount32)) {
@@ -22,13 +24,22 @@ int SetPelsPerMeter(int32_t pels) {
 	return 0;
 }
 
-
+int SetDefaultColor(uint8_t red, uint8_t green, uint8_t blue) {
+	s_defaultColor.SetColor(red, green, blue);
+	return 0;
+}
 
 RGB::RGB(uint8_t red, uint8_t green, uint8_t blue) {
 	rgbBlue = blue;
 	rgbGreen = green;
 	rgbRed = red;
 	rgbReserved = RESERVEDVALUE;
+}
+RGB::RGB(RGB& color) {
+	rgbBlue = color.GetBlue();
+	rgbGreen = color.GetGreen();
+	rgbRed = color.GetRed();
+	rgbReserved = color.GetReserved();
 }
 RGB::RGB() {
 	rgbBlue = DEFAULTVALUE;
@@ -39,6 +50,18 @@ RGB::RGB() {
 RGB::~RGB() {
 
 }
+uint8_t RGB::GetRed() {
+	return rgbRed;
+}
+uint8_t RGB::GetGreen() {
+	return rgbGreen;
+}
+uint8_t RGB::GetBlue() {
+	return rgbBlue;
+}
+uint8_t RGB::GetReserved() {
+	return rgbReserved;
+}
 int RGB::SetColor(uint8_t red, uint8_t green, uint8_t blue, uint8_t reserved) {
 	rgbBlue = blue;
 	rgbGreen = green;
@@ -46,11 +69,22 @@ int RGB::SetColor(uint8_t red, uint8_t green, uint8_t blue, uint8_t reserved) {
 	rgbReserved = reserved;
 	return 0;
 }
+int RGB::SetColor(RGB& color) {
+	rgbBlue = color.GetBlue();
+	rgbGreen = color.GetGreen();
+	rgbRed = color.GetRed();
+	rgbReserved = color.GetReserved();
+	return 0;
+}
 int RGB::WriteRGB(FILE* fw) {
 	fwrite(&rgbBlue, 1, 1, fw);
 	fwrite(&rgbGreen, 1, 1, fw);
 	fwrite(&rgbRed, 1, 1, fw);
 	fwrite(&rgbReserved, 1, 1, fw);
+	return 0;
+}
+int RGB::PrintColor() {
+	printf("<class RGB>: { %d(r), %d(g), %d(b), %d(v) }\n", rgbRed, rgbGreen, rgbBlue, rgbReserved);
 	return 0;
 }
 
@@ -200,7 +234,7 @@ int BMP::ResetColor() {
 	int bitCount = infoHeader.GetBitCount();
 	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
 	for (int i = 0; i < colorCount; i++) {
-		(rgb + i)->SetColor(255, 255, 255);
+		(rgb + i)->SetColor(s_defaultColor);
 	}
 	return 0;
 }

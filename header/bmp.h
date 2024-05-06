@@ -27,14 +27,23 @@ extern int BitCountCorrect(uint16_t* bitCount);
 extern int SetPelsPerMeter(int32_t xPels, int32_t yPels);
 extern int SetPelsPerMeter(int32_t pels);
 
+extern int SetDefaultColor(uint8_t red, uint8_t green, uint8_t blue);
+
 
 class RGB {
 public:
 	RGB(uint8_t red, uint8_t green, uint8_t blue);
+	RGB(RGB& color);
 	RGB();
 	~RGB();
+	uint8_t GetRed();
+	uint8_t GetGreen();
+	uint8_t GetBlue();
+	uint8_t GetReserved();
 	int SetColor(uint8_t red, uint8_t green, uint8_t blue, uint8_t reserved = RESERVEDVALUE);
+	int SetColor(RGB& color);
 	int WriteRGB(FILE* fw);
+	int PrintColor();
 private:
 	uint8_t rgbBlue;
 	uint8_t rgbGreen;
