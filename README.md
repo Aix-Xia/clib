@@ -7,3 +7,4 @@ this is c/c++ function library
 6. bmp.h has create bmp type file struct and function
 7. common.h has some print function
 8. mydirent.h is self-define dirent funciton
+9. iterator.h provide a Iterator class and LOOP macro
