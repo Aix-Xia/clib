@@ -6,3 +6,4 @@ this is c/c++ function library
 5. mlib.h has #include all .h files in header folder
 6. bmp.h has create bmp type file struct and function
 7. common.h has some print function
+8. mydirent.h is self-define dirent funciton
