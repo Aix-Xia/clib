@@ -1,4 +1,6 @@
 #pragma once
+#ifndef _TERATOR_H_
+#define _TERATOR_H_
 
 template <typename T>
 class Iterator {
@@ -43,9 +45,13 @@ bool lam(int index, int count, T* iter, T* item) {
 		*item = *(iter + index);
 		return true;
 	}
+	else if (item == NULL) {
+		return false;
+	}
 	else {
 		return false;
 	}
 }
 #define LOOP(type, iter, item)		int cnt=sizeof(iter)/sizeof(iter[0]); type item; for(int i = 0; lam(i, cnt, iter, &item); i++)
 
+#endif

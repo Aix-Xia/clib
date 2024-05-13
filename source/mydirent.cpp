@@ -1,7 +1,22 @@
 #include "../header/mydirent.h"
 
 
+bool FolderExist(const char* path) {
+	DIR* dir = opendir(path);
+	if (dir) {
+		closedir(dir);
+		return true;
+	}
+	return false;
+}
+int CreateFolder(const char* path) {
+	char buffer[128];
 
+	sprintf(buffer, "MD %s", path);
+	system(buffer);
+
+	return 0;
+}
 
 int GetFiles(char* files[], const char* path) {
 	struct dirent* entry;
@@ -16,8 +31,12 @@ int GetFiles(char* files[], const char* path) {
 	while ((entry = readdir(dir)) != NULL) {
 		if (entry->d_type == DT_REG) { // 如果是普通文件
 			files[i] = (char*)malloc(strlen(path) + strlen(entry->d_name) + 2);
+			if (files[i] == NULL) {
+				perror("files[i]");
+				return -1;
+			}
 			strcpy(files[i], path);
-			strcat(files[i], "/");
+			strcat(files[i], PATHSEPSTR);
 			strcat(files[i], entry->d_name);
 			i++;
 		}
@@ -41,8 +60,12 @@ int GetAllFiles(char* files[], const char* path) {
 	while ((entry = readdir(dir)) != NULL) {
 		if (entry->d_type == DT_REG) { // 如果是普通文件
 			files[i] = (char*)malloc(strlen(path) + strlen(entry->d_name) + 2);
+			if (files[i] == NULL) {
+				perror("files[i]");
+				return -1;
+			}
 			strcpy(files[i], path);
-			strcat(files[i], "/");
+			strcat(files[i], PATHSEPSTR);
 			strcat(files[i], entry->d_name);
 			i++;
 		}
@@ -51,8 +74,12 @@ int GetAllFiles(char* files[], const char* path) {
 		}
 		else if (entry->d_type == DT_DIR) {
 			char* folder = (char*)malloc(strlen(path) + strlen(entry->d_name) + 2);
+			if (folder == NULL) {
+				perror("folder");
+				return -1;
+			}
 			strcpy(folder, path);
-			strcat(folder, "/");
+			strcat(folder, PATHSEPSTR);
 			strcat(folder, entry->d_name);
 			i += GetAllFiles(files + i, folder);
 		}
@@ -77,8 +104,12 @@ int GetFolders(char* folders[], const char* path) {
 		}
 		if (entry->d_type == DT_DIR) { // 如果文件夹
 			folders[i] = (char*)malloc(strlen(path) + strlen(entry->d_name) + 2);
+			if (folders[i] == NULL) {
+				perror("folder");
+				return -1;
+			}
 			strcpy(folders[i], path);
-			strcat(folders[i], "/");
+			strcat(folders[i], PATHSEPSTR);
 			strcat(folders[i], entry->d_name);
 			i++;
 		}
@@ -98,4 +129,22 @@ char* GetFileFormat(const char* filename) {
 		return format;
 	}
 	return NULL;
+}
+
+int GetFileName(char* fileName, const char* path, bool includeExtension) {
+	const char* lastSlash = strrchr(path, PATHSEPCHAR); // Unix/Linux-styple path
+	if (lastSlash != NULL) {
+		const char* nameStart = lastSlash + 1;
+		strcpy(fileName, nameStart);
+		if(!includeExtension){
+			char* dot = (char *)strrchr(fileName, '.');
+			if (dot != NULL) {
+				*dot = '\0';
+			}
+		}
+	}
+	else {
+		strcpy(fileName, path);
+	}
+	return (int)strlen(fileName);
 }
