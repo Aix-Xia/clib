@@ -7,26 +7,37 @@ uint32_t s_ypelspermeter = 0x0ec4;
 RGB s_defaultColor(255, 255, 255);
 
 
+int GetColorCount(uint16_t* bitCount) {
+	int colorCount;
+	BitCountCorrect(bitCount);
+	if (*bitCount == bitCount24 || *bitCount == bitCount32) {
+		colorCount = 0;
+	}
+	else {
+		colorCount = (int)pow(2, *bitCount);
+	}
+	return colorCount;
+}
 int BitCountCorrect(uint16_t* bitCount) {
 	if ((*bitCount != bitCount1) && (*bitCount != bitCount4) && (*bitCount != bitCount8) && (*bitCount != bitCount24) && (*bitCount != bitCount32)) {
 		*bitCount = bitCount32;
 	}
-	return 0;
+	return COMPLETE;
 }
 int SetPelsPerMeter(int32_t xPels, int32_t yPels) {
 	s_xpelspermeter = xPels;
 	s_ypelspermeter = yPels;
-	return 0;
+	return COMPLETE;
 }
 int SetPelsPerMeter(int32_t pels) {
 	s_xpelspermeter = pels;
 	s_ypelspermeter = pels;
-	return 0;
+	return COMPLETE;
 }
 
 int SetDefaultColor(uint8_t red, uint8_t green, uint8_t blue) {
 	s_defaultColor.SetColor(red, green, blue);
-	return 0;
+	return COMPLETE;
 }
 
 RGB::RGB(uint8_t red, uint8_t green, uint8_t blue) {
@@ -67,25 +78,25 @@ int RGB::SetColor(uint8_t red, uint8_t green, uint8_t blue, uint8_t reserved) {
 	rgbGreen = green;
 	rgbRed = red;
 	rgbReserved = reserved;
-	return 0;
+	return COMPLETE;
 }
 int RGB::SetColor(RGB& color) {
 	rgbBlue = color.GetBlue();
 	rgbGreen = color.GetGreen();
 	rgbRed = color.GetRed();
 	rgbReserved = color.GetReserved();
-	return 0;
+	return COMPLETE;
 }
 int RGB::WriteRGB(FILE* fw) {
 	fwrite(&rgbBlue, 1, 1, fw);
 	fwrite(&rgbGreen, 1, 1, fw);
 	fwrite(&rgbRed, 1, 1, fw);
 	fwrite(&rgbReserved, 1, 1, fw);
-	return 0;
+	return COMPLETE;
 }
 int RGB::PrintColor() {
 	printf("<class RGB>: { %d(r), %d(g), %d(b), %d(v) }\n", rgbRed, rgbGreen, rgbBlue, rgbReserved);
-	return 0;
+	return COMPLETE;
 }
 
 
@@ -109,7 +120,7 @@ BMPFileHeader::~BMPFileHeader() {
 int BMPFileHeader::SetFileHeader(uint32_t fileSize, uint32_t offset) {
 	bfSize = fileSize;
 	bfOffBits = offset;
-	return 0;
+	return COMPLETE;
 }
 int BMPFileHeader::WriteFileHeader(FILE* fw) {
 	fwrite(&bfType, 1, 2, fw);
@@ -117,7 +128,7 @@ int BMPFileHeader::WriteFileHeader(FILE* fw) {
 	fwrite(&bfReserved1, 1, 2, fw);
 	fwrite(&bfReserved2, 1, 2, fw);
 	fwrite(&bfOffBits, 1, 4, fw);
-	return 0;
+	return COMPLETE;
 }
 uint32_t BMPFileHeader::GetSize() {
 	return bfSize;
@@ -164,7 +175,7 @@ int BMPInfoHeader::SetInfoHeader(int32_t width, int32_t height, uint16_t bitCoun
 	biHeight = height;
 	biBitCount = bitCount;
 	biSizeImage = ((width > 0 ? width : -width) * bitCount + 31) / 32 * 4 * (height > 0 ? height : -height);
-	return 0;
+	return COMPLETE;
 }
 int BMPInfoHeader::WriteInfoHeader(FILE* fw) {
 	fwrite(&biSize, 1, 4, fw);
@@ -178,7 +189,7 @@ int BMPInfoHeader::WriteInfoHeader(FILE* fw) {
 	fwrite(&biYPelsPerMeter, 1, 4, fw);
 	fwrite(&biClrUsed, 1, 4, fw);
 	fwrite(&biClrImportant, 1, 4, fw);
-	return 0;
+	return COMPLETE;
 }
 uint32_t BMPInfoHeader::GetWidth() {
 	return biWidth > 0 ? biWidth : -biWidth;
@@ -193,8 +204,7 @@ uint16_t BMPInfoHeader::GetBitCount() {
 
 
 BMP::BMP(int32_t width, int32_t height, uint16_t bitCount) {
-	BitCountCorrect(&bitCount);
-	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
+	int colorCount = GetColorCount(&bitCount);
 	uint32_t fOffBits = 4 * colorCount + 14 + 40;
 	uint32_t fSize = fOffBits + ((width > 0 ? width : -width) * bitCount + 31) / 32 * 4 * (height > 0 ? height : -height);
 	fileHeader.SetFileHeader(fSize, fOffBits);
@@ -221,29 +231,29 @@ BMP::~BMP() {
 	free(data);
 }
 int BMP::SetColor(uint8_t index, uint8_t red, uint8_t green, uint8_t blue) {
-	int bitCount = infoHeader.GetBitCount();
-	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
+	uint16_t bitCount = infoHeader.GetBitCount();
+	int colorCount = GetColorCount(&bitCount);
 	if (index >= colorCount) {
 		perror("index is out of range!\n");
-		return -1;
+		return ABNORMAL;
 	}
 	(rgb + index)->SetColor(red, green, blue);
-	return 0;
+	return COMPLETE;
 }
 int BMP::ResetColor() {
-	int bitCount = infoHeader.GetBitCount();
-	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
+	uint16_t bitCount = infoHeader.GetBitCount();
+	int colorCount = GetColorCount(&bitCount);
 	for (int i = 0; i < colorCount; i++) {
 		(rgb + i)->SetColor(s_defaultColor);
 	}
-	return 0;
+	return COMPLETE;
 }
 uint32_t BMP::GetDataIndex(uint32_t row, uint32_t col) {
 	uint32_t ttWidth = infoHeader.GetWidth();
 	uint32_t ttHeight = infoHeader.GetHeight();
-	if ((col >= ttWidth) || (row >= ttHeight)) {
+	if (col >= ttWidth || row >= ttHeight) {
 		perror("index is out of range!\n");
-		return -1;
+		return ABNORMAL;
 	}
 	uint32_t index = row * ttWidth + col;
 	return index;
@@ -252,12 +262,12 @@ int BMP::SetData(uint32_t row, uint32_t col, uint32_t value) {
 	uint16_t bitCount = infoHeader.GetBitCount();
 	if ((bitCount != 32) && (value > (uint32_t)(pow(2, bitCount) - 1))) {
 		perror("value is out of range!\n");
-		return -1;
+		return ABNORMAL;
 	}
 	uint32_t index = GetDataIndex(row, col);
 	*(data + index) = value;
 
-	return 0;
+	return COMPLETE;
 }
 int BMP::ResetData() {
 	uint32_t ttWidth = infoHeader.GetWidth();
@@ -266,18 +276,18 @@ int BMP::ResetData() {
 	for (uint32_t i = 0; i < ttDataCount; i++) {
 		*(data + i) = 0;
 	}
-	return 0;
+	return COMPLETE;
 }
 int BMP::Save(const char* fileName) {
 	uint32_t ttHeight = infoHeader.GetHeight();
 	uint32_t ttWidth = infoHeader.GetWidth();
 	uint16_t bitCount = infoHeader.GetBitCount();
-	int colorCount = ((bitCount == bitCount24) || (bitCount == bitCount32)) ? 0 : (int)pow(2, bitCount);
+	int colorCount = GetColorCount(&bitCount);
 
 	FILE* fw = fopen(fileName, "wb");
 	if (fw == NULL) {
 		perror("bmp file create fail!");
-		return 1;
+		return IMCOMPLETE;
 	}
 
 	// write fileHeader to fw
@@ -388,8 +398,8 @@ int BMP::Save(const char* fileName) {
 		}
 	}
 	else {
-		return -1;
+		return ABNORMAL;
 	}
 	fclose(fw);
-	return 0;
+	return COMPLETE;
 }

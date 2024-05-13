@@ -1,8 +1,12 @@
 #pragma once
+#ifndef _BMP_H_
+#define _BMP_H_
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "define.h"
 
 #define DEFAULTVALUE	0
 
@@ -19,10 +23,10 @@
 #define bitCount24		((uint16_t)24)
 #define bitCount32		((uint16_t)32)
 
-#define BITCNTINBYTE	8
-#define UNITBYTECNT		4
+//#define BITCNTINBYTE	8
+#define UNITBYTECNT		4	// data base bytes count
 
-
+extern int GetColorCount(uint16_t* bitCount);
 extern int BitCountCorrect(uint16_t* bitCount);
 extern int SetPelsPerMeter(int32_t xPels, int32_t yPels);
 extern int SetPelsPerMeter(int32_t pels);
@@ -111,3 +115,5 @@ private:
 	RGB* rgb;
 	int* data;
 };
+
+#endif
